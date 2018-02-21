@@ -70,7 +70,8 @@
                     },
                     {
                         height: {min: pictureHeight}
-                    }
+                    },
+                    { facingMode: { exact: "environment" } }
                 ]
             }
         };
