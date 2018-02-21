@@ -37,24 +37,46 @@
     function searchForRearCamera() {
         var deferred = new $.Deferred();
 
-        //MediaStreamTrack.getSources seams to be supported only by Chrome
-        if (MediaStreamTrack && MediaStreamTrack.getSources) {
-            MediaStreamTrack.getSources(function (sources) {
-                var rearCameraIds = sources.filter(function (source) {
-                    return (source.kind === 'video' && source.facing === 'environment');
-                }).map(function (source) {
-                    return source.id;
-                });
+       var deferred = new $.Deferred();
 
-                if (rearCameraIds.length) {
-                    deferred.resolve(rearCameraIds[0]);
-                } else {
+        var DEVICES = [];
+        var final = null;
+        navigator.mediaDevices.enumerateDevices()
+            .then(function(devices) {
+
+                var arrayLength = devices.length;
+                for (var i = 0; i < arrayLength; i++)
+                {
+                    var tempDevice = devices[i];
+                    //FOR EACH DEVICE, PUSH TO DEVICES LIST THOSE OF KIND VIDEOINPUT (cameras)
+                    //AND IF THE CAMERA HAS THE RIGHT FACEMODE ASSING IT TO "final"
+                    if (tempDevice.kind == "videoinput")
+                    {
+                        DEVICES.push(tempDevice);
+                        if(tempDevice.facingMode == "environment" ||tempDevice.label.indexOf("facing back")>=0 )
+                            {final = tempDevice;}
+                    }
+                }
+
+                var totalCameras = DEVICES.length;
+                //If couldnt find a suitable camera, pick the last one... you can change to what works for you
+                if(final == null)
+                {
+                    //console.log("no suitable camera, getting the last one");
+                    final = DEVICES[totalCameras-1];
                     deferred.resolve(null);
                 }
-            });
-        } else {
-            deferred.resolve(null);
-        }
+                else
+                {
+                    deferred.resolve(final.deviceId)
+                };
+
+            })
+            .catch(function(err) {console.log(err.name + ": " + err.message)});
+
+
+
+        return deferred.promise();
 
         return deferred.promise();
     }
